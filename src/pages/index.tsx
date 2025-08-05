@@ -1,9 +1,14 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Chango, Geist_Mono } from "next/font/google";
+import Map, { Layer, Source, MapRef } from "react-map-gl/maplibre";
+import "maplibre-gl/dist/maplibre-gl.css";
+import { useEffect, useRef, useState } from "react";
+import { useWindowSize } from "@uidotdev/usehooks";
+import { boundingBox, mapPoints, mapViewState } from "@/data/points";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const changoSans = Chango({
+  variable: "--font-chango-sans",
   subsets: ["latin"],
+  weight: "400",
 });
 
 const geistMono = Geist_Mono({
@@ -11,105 +16,93 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const layerStyle = {
+  id: "point",
+  type: "circle",
+  paint: {
+    "circle-radius": 10,
+    "circle-color": "#007cbf",
+  },
+};
+
+const calculateBoundsWithPadding = (
+  bbox: [number, number, number, number],
+  paddingDegrees = 0.01
+): [[number, number], [number, number]] => {
+  return [
+    [bbox[0] - paddingDegrees, bbox[1] - paddingDegrees], // Southwest corner
+    [bbox[2] + paddingDegrees, bbox[3] + paddingDegrees], // Northeast corner
+  ];
+};
+
 export default function Home() {
+  const mapRef = useRef<MapRef | null>(null);
+  const [viewState, setViewState] = useState(mapViewState);
+  const { width, height } = useWindowSize();
+
+  useEffect(() => {
+    // Log the window size whenever it changes
+    console.log(`Window size: ${width}x${height}`);
+  }, [width, height]);
+  const [mapLoaded, setMapLoaded] = useState(false);
+
+  // Calculate bounds and fit map to feature collection
+  useEffect(() => {
+    if (
+      mapPoints &&
+      mapPoints.features.length > 0 &&
+      mapLoaded &&
+      mapRef.current
+    ) {
+      try {
+        // Fit the map to the bounding box with padding
+        mapRef.current.fitBounds(
+          [
+            [boundingBox[0], boundingBox[1]],
+            [boundingBox[2], boundingBox[3]],
+          ], // [[minLng, minLat], [maxLng, maxLat]]
+          {
+            padding: {
+              top: 50,
+              bottom: 50,
+              left: 50,
+              right: 50,
+            },
+            duration: 1000, // Animation duration in milliseconds
+          }
+        );
+      } catch (error) {
+        console.error("Error calculating bounds:", error);
+      }
+    }
+  }, [mapPoints, mapLoaded]);
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/pages/index.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className={`font-sans`}>
+      <main className="bg-white min-h-screen text-gray-700 flex flex-col row-start-2 items-center ">
+        <h1
+          className={`p-2 w-full text-center ${changoSans.className} text-xl`}>
+          Seaside Estate Scavenger Hunt
+        </h1>
+        <div className="w-full h-fit">
+          <Map
+            ref={mapRef}
+            {...viewState}
+            maxBounds={calculateBoundsWithPadding(boundingBox, 0.005)}
+            onMove={(evt) => setViewState(evt.viewState)}
+            onLoad={() => setMapLoaded(true)}
+            style={{
+              width: "100%",
+              height: `${height ? height /  2 : 0}px`,
+            }}
+            mapStyle="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">
+            <Source id="my-data" type="geojson" data={mapPoints}>
+              <Layer type="circle" paint={layerStyle.paint} />
+            </Source>
+          </Map>
         </div>
+        <div className={`${geistMono.className} p-2`}>1q234</div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
