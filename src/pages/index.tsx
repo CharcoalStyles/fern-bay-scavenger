@@ -2,8 +2,9 @@ import { Chango, Geist_Mono } from "next/font/google";
 import Map, { Layer, Source, MapRef } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef, useState } from "react";
-import { useWindowSize } from "@uidotdev/usehooks";
+import { useWindowSize, useGeolocation } from "@uidotdev/usehooks";
 import { boundingBox, mapPoints, mapViewState } from "@/data/points";
+import { MainHunts } from "@/components/MainHunts";
 
 const changoSans = Chango({
   variable: "--font-chango-sans",
@@ -15,15 +16,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
-const layerStyle = {
-  id: "point",
-  type: "circle",
-  paint: {
-    "circle-radius": 10,
-    "circle-color": "#007cbf",
-  },
-};
 
 const calculateBoundsWithPadding = (
   bbox: [number, number, number, number],
@@ -39,6 +31,7 @@ export default function Home() {
   const mapRef = useRef<MapRef | null>(null);
   const [viewState, setViewState] = useState(mapViewState);
   const { width, height } = useWindowSize();
+  const { latitude, longitude } = useGeolocation();
 
   useEffect(() => {
     // Log the window size whenever it changes
@@ -93,15 +86,43 @@ export default function Home() {
             onLoad={() => setMapLoaded(true)}
             style={{
               width: "100%",
-              height: `${height ? height /  2 : 0}px`,
+              height: `${height ? height / 2 : 0}px`,
             }}
             mapStyle="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">
             <Source id="my-data" type="geojson" data={mapPoints}>
-              <Layer type="circle" paint={layerStyle.paint} />
+              <Layer
+                type="circle"
+                paint={{
+                  "circle-radius": 5,
+                  "circle-color": "#6666ff",
+                  "circle-stroke-color": "#3333a0",
+                  "circle-stroke-width": 1.5,
+                }}
+              />
             </Source>
+            {latitude && longitude && (
+              <Source
+                id="geolocation"
+                type="geojson"
+                data={{ type: "Point", coordinates: [longitude, latitude] }}>
+                <Layer
+                  id="geolocation-point"
+                  type="circle"
+                  paint={{
+                    "circle-radius": 5,
+                    "circle-color": "#ff0000",
+                    "circle-opacity": 0.3,
+                    "circle-stroke-color": "#ff0000",
+                    "circle-stroke-width": 2,
+                  }}
+                />
+              </Source>
+            )}
           </Map>
         </div>
-        <div className={`${geistMono.className} p-2`}>1q234</div>
+        <div className={`${geistMono.className} p-2`}>
+          <MainHunts />
+        </div>
       </main>
     </div>
   );
