@@ -6,6 +6,7 @@ import { useWindowSize, useGeolocation } from "@uidotdev/usehooks";
 import { boundingBox, mapPoints, mapViewState } from "@/data/points";
 import { MainHunts } from "@/components/MainHunts";
 import { ClientOnly } from "@/components/ClientOnly";
+import { ShellHunts } from "@/components/ShellHunts";
 
 const changoSans = Chango({
   variable: "--font-chango-sans",
@@ -73,7 +74,7 @@ export default function Home() {
 
   return (
     <div className={`font-sans`}>
-      <main className="bg-white min-h-screen text-gray-700 flex flex-col row-start-2 items-center ">
+      <main className="bg-white min-h-screen text-gray-700 flex flex-col row-start-2 items-center justify-around ">
         <h1
           className={`p-2 w-full text-center ${changoSans.className} text-xl`}>
           Seaside Estate Scavenger Hunt
@@ -124,6 +125,7 @@ export default function Home() {
         <div className={`${geistMono.className} px-2`}>
           <ClientOnly>
             <MainHunts />
+            <ShellHunts />
           </ClientOnly>
         </div>
       </main>
