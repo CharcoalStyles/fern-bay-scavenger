@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useWindowSize, useGeolocation } from "@uidotdev/usehooks";
 import { boundingBox, mapPoints, mapViewState } from "@/data/points";
 import { MainHunts } from "@/components/MainHunts";
+import { ClientOnly } from "@/components/ClientOnly";
 
 const changoSans = Chango({
   variable: "--font-chango-sans",
@@ -120,8 +121,10 @@ export default function Home() {
             )}
           </Map>
         </div>
-        <div className={`${geistMono.className} p-2`}>
-          <MainHunts />
+        <div className={`${geistMono.className} px-2`}>
+          <ClientOnly>
+            <MainHunts />
+          </ClientOnly>
         </div>
       </main>
     </div>
